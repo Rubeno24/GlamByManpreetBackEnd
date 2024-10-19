@@ -25,14 +25,6 @@ const client = twilio(accountSid, authToken); // Corrected initialization
 const app = express();
 const port = process.env.PORT || 8080;
 
-// PostgreSQL connection configuration
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-});
 
 // Middleware configuration
 app.use(
@@ -50,16 +42,6 @@ app.use(
     },
   })
 );
-
-// Test database connection
-pool.query("SELECT NOW()", (err, res) => {
-  if (err) {
-    console.error("Database connection error:", err);
-  } else {
-    console.log("Database connected:", res.rows[0].now);
-  }
-});
-
 
 // ********************************************
 // Function to send SMS
