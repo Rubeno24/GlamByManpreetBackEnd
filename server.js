@@ -1,5 +1,4 @@
 require("dotenv").config(); // Load environment variables
-const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -9,8 +8,9 @@ const session = require("express-session");
 const twilio = require("twilio"); // Import Twilio SDK
 const mailgun = require("mailgun-js"); // Import Mailgun
 
-// Initialize Express app
-const app = express();
+const express = require("express");
+const app = express(); // Correct initialization
+
 
 // Initialize PostgreSQL pool
 const pool = new Pool({
