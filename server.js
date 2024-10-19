@@ -1,4 +1,5 @@
 require("dotenv").config();
+const app = express();
 const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
@@ -22,7 +23,6 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken); // Corrected initialization
 
-const app = express();
 const port = process.env.PORT || 8080;
 
 
