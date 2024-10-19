@@ -6,6 +6,15 @@ const helmet = require("helmet");
 const supabase = require("./src/config/supabaseClient.js");
 const bcrypt = require('bcryptjs');
 
+const session = require('express-session');
+app.use(session({
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }  // Use `true` in production over HTTPS
+}));
+
+
 const twilio = require("twilio"); // Import Twilio SDK
 
 // Twilio configuration
