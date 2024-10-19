@@ -4,7 +4,7 @@ const { Pool } = require("pg");
 const cors = require("cors");
 const helmet = require("helmet");
 const supabase = require("./src/config/supabaseClient.js");
-const bcrypt = require("bcrypt");
+const bcrypt = require('bcryptjs');
 
 const twilio = require("twilio"); // Import Twilio SDK
 
