@@ -432,34 +432,30 @@ app.delete("/bookings/:id", async (req, res) => {
 // Route - Insert feed submissions
 // ********************************
 
-app.post("/insertfeed", async (req, res) => {
+app.post("/feed", async (req, res) => {
+  const { content } = req.body;
+
   try {
-    // Extract the 'content' field from the JSON body
-    const content = req.body.content;
-
-    console.log("Received content:", content); // Log the plain text content to confirm
-
-    // Step 1: Insert into local 'feed' table
-    const query = "INSERT INTO feed (content) VALUES ($1)";
-    await pool.query(query, [content]);
-
-    // Step 2: Insert into Supabase 'feed_dev' table
     const { error: supabaseError } = await supabase
       .from("feed_dev")
       .insert([{ content }]);
 
     if (supabaseError) {
-      console.error("Error adding feed item to Supabase:", supabaseError.message);
+      console.error(
+        "Error adding feed item to Supabase:",
+        supabaseError.message
+      );
       return res.status(500).send("Error adding feed item to Supabase");
     }
 
-    res.status(201).send("Feed item added successfully to both local and Supabase");
+    res
+      .status(201)
+      .send("Feed item added successfully to both local and Supabase");
   } catch (error) {
     console.error("Error adding feed item:", error.message);
     res.status(500).send("Error adding feed item");
   }
 });
-
 
 
 
