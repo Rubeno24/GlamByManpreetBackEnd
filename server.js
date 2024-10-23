@@ -432,7 +432,7 @@ app.delete("/bookings/:id", async (req, res) => {
 // Route - Insert feed submissions
 // ********************************
 
-app.post("/feed", async (req, res) => {
+app.post("/insertfeed", async (req, res) => {
   const { content } = req.body;
 
   try {
