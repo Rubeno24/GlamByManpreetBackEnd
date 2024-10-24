@@ -33,6 +33,8 @@ const client = twilio(accountSid, authToken);
 
 app.use(express.json());
 app.use(cookieParser()); // Parse cookies
+
+
 app.use(
   helmet.contentSecurityPolicy({
     directives: {
@@ -63,6 +65,29 @@ app.use(
 
 
 
+// Function to remove expired sessions
+async function removeExpiredSessions() {
+  try {
+    const { error } = await supabase
+      .from("sessions")
+      .delete()
+      .lt("expire", new Date().toISOString()); // Delete sessions where expire < now
+
+    if (error) {
+      console.error("Error removing expired sessions:", error.message);
+    } else {
+      console.log("Expired sessions removed successfully");
+    }
+  } catch (err) {
+    console.error("Unexpected error:", err.message);
+  }
+}
+
+// Schedule the cleanup every 30 minutes (1,800,000 milliseconds)
+setInterval(() => {
+  console.log("Running expired sessions cleanup...");
+  removeExpiredSessions();
+}, 1800000); // 30 minutes
 
 
 
