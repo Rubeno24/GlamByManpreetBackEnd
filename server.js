@@ -38,15 +38,57 @@ app.use(
   })
 );
 
-// Middleware setup
+// Middleware Configuration
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: "*",
     credentials: true,
   })
 );
 app.use(express.json());
-app.use(helmet());
+app.use(cookieParser()); // Parse cookies
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-eval'"],
+    },
+  })
+);
+
+
+async function createSession(sessionId, userId) {
+  const sessionData = {
+    userId, // Store user ID in the session
+    createdAt: new Date().toISOString(), // Store session creation time
+  };
+
+  const { error } = await supabase.from("sessions").insert([
+    {
+      sid: sessionId, // Store the session ID in the 'sid' column
+      sess: sessionData, // Store session data (including userId)
+      expire: new Date(Date.now() + 30 * 60 * 1000), // 30 min expiration
+    },
+  ]);
+
+  if (error) throw new Error(`Error creating session: ${error.message}`);
+}
+
+
+async function getSession(sessionId) {
+  const { data, error } = await supabase
+    .from("sessions")
+    .select("*")
+    .eq("sid", sessionId)
+    .single();
+  if (error || !data) return null;
+  return data;
+}
+
+async function deleteSession(sessionId) {
+  const { error } = await supabase.from("sessions").delete().eq("sid", sessionId);
+  if (error) throw new Error(`Error deleting session: ${error.message}`);
+}
 
 // ********************************************
 // Function to send SMS
@@ -463,42 +505,32 @@ app.post("/feed", async (req, res) => {
 // Login route
 // ****************************************
 
+// Login Route
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Query Supabase for the user with the provided email
-    const { data: users, error } = await supabase
+    const { data: user, error } = await supabase
       .from("accounts_dev")
       .select("*")
       .eq("email", email)
-      .single(); // Ensure only one result is returned
+      .single();
 
-    if (error || !users) {
-      return res.status(401).send("Invalid email or password"); // Handle invalid email
-    }
+    if (error || !user) return res.status(401).send("Invalid email or password");
 
-    const user = users;
     const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).send("Invalid email or password");
 
-    if (!isMatch) {
-      return res.status(401).send("Invalid email or password");
-    }
+    const sessionId = crypto.randomBytes(16).toString("hex");
+    await createSession(sessionId, user.id); // Store session in Supabase
 
-    // Store user ID in session
-    req.session.userId = user.id;
-
-    res.status(200).json({
-      message: "Login successful",
-      userId: user.id,
-      firstName: user.firstname,
-    });
+    res.cookie("sessionId", sessionId, { httpOnly: true, maxAge: 30 * 60 * 1000 });
+    res.status(200).json({ message: "Login successful", userId: user.id });
   } catch (err) {
     console.error(err);
     res.status(500).send("Error during login");
   }
 });
-
 
 // *****************************
 // Route - Get feed submissions
