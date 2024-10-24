@@ -7,7 +7,8 @@ const bcrypt = require("bcryptjs");
 const session = require("express-session");
 const twilio = require("twilio"); // Import Twilio SDK
 const mailgun = require("mailgun-js"); // Import Mailgun
-
+const cookieParser = require('cookie-parser');
+const crypto = require("crypto");
 const express = require("express");
 const app = express(); // Correct initialization
 
@@ -28,23 +29,8 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 
-// Session configuration
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: process.env.NODE_ENV === "production" },
-  })
-);
 
-// Middleware Configuration
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-  })
-);
+
 app.use(express.json());
 app.use(cookieParser()); // Parse cookies
 app.use(
@@ -55,6 +41,31 @@ app.use(
     },
   })
 );
+
+// Middleware Configuration
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  })
+);
+
+
+// Session configuration
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === "production" },
+  })
+);
+
+
+
+
+
+
 
 
 async function createSession(sessionId, userId) {
