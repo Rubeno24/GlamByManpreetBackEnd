@@ -47,7 +47,7 @@ app.use(
 // Middleware Configuration
 app.use(
   cors({
-    origin: "*",
+    origin: 'http://localhost:3000', // Replace '*' with the frontend's URL
     credentials: true,
   })
 );
