@@ -133,6 +133,13 @@ async function createSession(sessionId, userId) {
 };
 
 
+app.get("/check-session", isAuthenticated, (req, res) => {
+  res.status(200).json({
+    message: "Session is valid",
+    userId: req.userId,
+  });
+});
+
 async function getSession(sessionId) {
   const { data, error } = await supabase
     .from("sessions")
