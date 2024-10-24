@@ -53,13 +53,17 @@ app.use(
 );
 
 
-// Session configuration
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: process.env.NODE_ENV === "production" },
+    secret: process.env.SESSION_SECRET,  // Secret key for signing session ID cookie
+    resave: false,  // Prevents resaving session if not modified
+    saveUninitialized: false,  // Don't create a session until something is stored
+    cookie: { 
+      httpOnly: true,  // Prevents JavaScript access to cookies (helps mitigate XSS attacks)
+      secure: process.env.NODE_ENV === 'production' && process.env.USE_HTTPS === 'true',  // Sends cookies only over HTTPS in production
+      sameSite: 'lax',  // Prevents CSRF attacks while allowing some cross-origin GET requests
+      maxAge: 30 * 60 * 1000,  // 30-minute expiration
+    },
   })
 );
 
@@ -109,8 +113,10 @@ async function createSession(sessionId, userId) {
 
   if (error) throw new Error(`Error creating session: ${error.message}`);
 }
+
+
  // Middleware to Authenticate Using Session from Supabase
-const isAuthenticated = async (req, res, next) => {
+ const isAuthenticated = async (req, res, next) => {
   const sessionId = req.cookies.sessionId;
   if (!sessionId) return res.status(401).send("Unauthorized");
 
@@ -118,13 +124,14 @@ const isAuthenticated = async (req, res, next) => {
     const session = await getSession(sessionId);
     if (!session) return res.status(401).send("Session expired or not found");
 
-    req.userId = session.user_id; // Attach user ID to request
+    req.userId = session.sess.userId; // Ensure you're accessing the correct field
     next();
   } catch (err) {
-    console.error(err);
+    console.error("Auth error:", err.message);
     res.status(500).send("Error checking session");
   }
 };
+
 
 async function getSession(sessionId) {
   const { data, error } = await supabase
@@ -132,10 +139,10 @@ async function getSession(sessionId) {
     .select("*")
     .eq("sid", sessionId)
     .single();
+
   if (error || !data) return null;
   return data;
 }
-
 async function deleteSession(sessionId) {
   const { error } = await supabase.from("sessions").delete().eq("sid", sessionId);
   if (error) throw new Error(`Error deleting session: ${error.message}`);
@@ -575,13 +582,21 @@ app.post("/login", async (req, res) => {
     const sessionId = crypto.randomBytes(16).toString("hex");
     await createSession(sessionId, user.id); // Store session in Supabase
 
-    res.cookie("sessionId", sessionId, { httpOnly: true, maxAge: 30 * 60 * 1000 });
-    res.status(200).json({ message: "Login successful", userId: user.id });
+    // Set the sessionId as an HTTP-only cookie
+    res.cookie("sessionId", sessionId, { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'lax', 
+      maxAge: 30 * 60 * 1000 
+    });
+
+    res.status(200).json({ message: "Login successful" });
   } catch (err) {
     console.error(err);
     res.status(500).send("Error during login");
   }
 });
+
 
 // *****************************
 // Route - Get feed submissions
