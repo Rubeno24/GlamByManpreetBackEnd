@@ -109,7 +109,22 @@ async function createSession(sessionId, userId) {
 
   if (error) throw new Error(`Error creating session: ${error.message}`);
 }
+ // Middleware to Authenticate Using Session from Supabase
+const isAuthenticated = async (req, res, next) => {
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).send("Unauthorized");
 
+  try {
+    const session = await getSession(sessionId);
+    if (!session) return res.status(401).send("Session expired or not found");
+
+    req.userId = session.user_id; // Attach user ID to request
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error checking session");
+  }
+};
 
 async function getSession(sessionId) {
   const { data, error } = await supabase
