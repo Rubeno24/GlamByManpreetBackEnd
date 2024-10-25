@@ -30,9 +30,15 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 
 
-
+// Middleware configuration
 app.use(express.json());
-app.use(cookieParser()); // Parse cookies
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: 'http://localhost:3000', // Replace with frontend URL in production
+    credentials: true, // Allow cookies
+  })
+);
 
 
 app.use(
@@ -44,28 +50,6 @@ app.use(
   })
 );
 
-// Middleware Configuration
-app.use(
-  cors({
-    origin: 'http://localhost:3000', // Replace '*' with the frontend's URL
-    credentials: true,
-  })
-);
-
-
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,  // Secret key for signing session ID cookie
-    resave: false,  // Prevents resaving session if not modified
-    saveUninitialized: false,  // Don't create a session until something is stored
-    cookie: { 
-      httpOnly: true,  // Prevents JavaScript access to cookies (helps mitigate XSS attacks)
-      secure: process.env.NODE_ENV === 'production' && process.env.USE_HTTPS === 'true',  // Sends cookies only over HTTPS in production
-      sameSite: 'lax',  // Prevents CSRF attacks while allowing some cross-origin GET requests
-      maxAge: 30 * 60 * 1000,  // 30-minute expiration
-    },
-  })
-);
 
 
 
@@ -595,12 +579,7 @@ app.post("/login", async (req, res) => {
     const sessionId = crypto.randomBytes(16).toString("hex");
     await createSession(sessionId, user.id); // Store session in Supabase
 
-    res.cookie("sessionId", sessionId, { 
-      httpOnly: true, 
-      secure: false,  // Allow HTTP for local/testing
-      sameSite: 'Lax',  // Use 'Lax' for cross-origin safety
-      maxAge: 30 * 60 * 1000 // 30 minutes
-    });
+ 
     
 
     res.status(200).json({ message: "Login successful" });
