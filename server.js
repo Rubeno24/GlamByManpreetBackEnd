@@ -560,7 +560,6 @@ app.post("/feed", async (req, res) => {
 // Login route
 // ****************************************
 
-// Login Route
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -591,25 +590,35 @@ app.post("/login", async (req, res) => {
       createdAt: new Date().toISOString(),
     };
 
-    // 5. Store the session in the `sessions` table
+    // 5. Calculate the expiration date for the session (e.g., 24 hours from now)
+    const expireDate = new Date();
+    expireDate.setDate(expireDate.getDate() + 1); // 1 day expiration
+
+    // 6. Store the session in the `sessions` table
     const { error: sessionError } = await supabase
       .from("sessions")
-      .insert([{ sid: sessionId, sess: sessionData }]);
+      .insert([
+        {
+          sid: sessionId,
+          sess: sessionData,
+          expire: expireDate.toISOString(), // Add the expiration date here
+        },
+      ]);
 
     if (sessionError) {
       console.error(sessionError);
       return res.status(500).send("Error creating session");
     }
 
-    // 6. Set the session ID in a cookie
-    res.cookie('sid', sessionId, {
-      httpOnly: true,  // Prevent client-side JS from accessing the cookie
-      sameSite: 'None', // Allow cross-site requests
-      secure: false,    // Set to true if using HTTPS in production
+    // 7. Set the session ID in a cookie
+    res.cookie("sid", sessionId, {
+      httpOnly: true, // Prevent client-side JS from accessing the cookie
+      sameSite: "None", // Allow cross-site requests
+      secure: false, // Set to true if using HTTPS in production
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
-    // 7. Respond with success
+    // 8. Respond with success
     res.status(200).json({ message: "Login successful" });
 
   } catch (err) {
@@ -617,6 +626,7 @@ app.post("/login", async (req, res) => {
     res.status(500).send("Error during login");
   }
 });
+
 
 
 
