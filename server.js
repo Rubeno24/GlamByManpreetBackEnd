@@ -101,39 +101,47 @@ async function createSession(sessionId, userId) {
 
 const isAuthenticated = async (req, res, next) => {
   try {
-    // 1. Retrieve the session ID from the cookie
-    const sessionId = req.cookies.sid;
-    console.log("Session ID from cookie:", sessionId);  // Log session ID for debugging
+    const sessionId = req.cookies.sid;  // Adjusted cookie key
+    console.log("Session ID from cookie:", sessionId);
 
     if (!sessionId) {
-      console.warn("No session ID found in cookie");
+      console.warn("No session ID found");
       return res.status(401).send("Unauthorized: No session ID found");
     }
 
-    // 2. Fetch session from the database
+    // Query the database for the session
     const { data: session, error } = await supabase
       .from("sessions")
-      .select("sess")
+      .select("sess, expire")
       .eq("sid", sessionId)
       .single();
 
     if (error || !session) {
-      console.error("Session not found or error:", error);
+      console.error("Session error:", error);
       return res.status(401).send("Unauthorized: Session expired or not found");
     }
 
-    console.log("Session data:", session);  // Log session data for verification
+    // Check if the session is expired
+    const currentTime = new Date();
+    const expireTime = new Date(session.expire);
+    if (expireTime < currentTime) {
+      return res.status(401).send("Unauthorized: Session expired");
+    }
 
-    // 3. Attach the user ID to the request object for further use
-    req.userId = session.sess.userId;
+    // Parse the session data if necessary
+    const sessionData = typeof session.sess === "string"
+      ? JSON.parse(session.sess)
+      : session.sess;
 
-    // 4. Proceed to the next middleware or route handler
-    next();
+    req.userId = sessionData.userId;  // Attach user ID to request
+    next();  // Proceed to next middleware
+
   } catch (err) {
     console.error("Auth error:", err.message);
     res.status(500).send("Internal Server Error: Error checking session");
   }
 };
+
 
 // Protected route to check session
 app.get("/check-session", isAuthenticated, (req, res) => {
