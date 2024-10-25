@@ -101,46 +101,41 @@ async function createSession(sessionId, userId) {
 
 const isAuthenticated = async (req, res, next) => {
   try {
-    const sessionId = req.cookies.sid;  // Adjusted cookie key
-    console.log("Session ID from cookie:", sessionId);
+    // Step 1: Check if the 'sid' cookie exists in the browser
+    const sessionId = req.cookies.sid;
 
     if (!sessionId) {
-      console.warn("No session ID found");
-      return res.status(401).send("Unauthorized: No session ID found");
+      // If no session ID cookie is found, respond with unauthorized status
+      console.warn("No session ID cookie found");
+      return res.status(401).send("Unauthorized: No session ID");
     }
 
-    // Query the database for the session
+    console.log("Session ID from cookie:", sessionId);
+
+    // Step 2: Check if the session ID exists in the sessions table
     const { data: session, error } = await supabase
       .from("sessions")
-      .select("sess, expire")
+      .select("*") // You can still select all columns if needed
       .eq("sid", sessionId)
       .single();
 
     if (error || !session) {
-      console.error("Session error:", error);
-      return res.status(401).send("Unauthorized: Session expired or not found");
+      // If session is not found, return unauthorized status
+      console.error("Invalid or expired session:", error || "Session not found");
+      return res.status(401).send("Unauthorized: Invalid or expired session");
     }
 
-    // Check if the session is expired
-    const currentTime = new Date();
-    const expireTime = new Date(session.expire);
-    if (expireTime < currentTime) {
-      return res.status(401).send("Unauthorized: Session expired");
-    }
+    // Attach user ID to the request object
+    req.userId = session.sess.userId; // Assuming sess contains userId
 
-    // Parse the session data if necessary
-    const sessionData = typeof session.sess === "string"
-      ? JSON.parse(session.sess)
-      : session.sess;
-
-    req.userId = sessionData.userId;  // Attach user ID to request
-    next();  // Proceed to next middleware
-
+    // Proceed to the next middleware or route
+    next();
   } catch (err) {
-    console.error("Auth error:", err.message);
-    res.status(500).send("Internal Server Error: Error checking session");
+    console.error("Authentication error:", err.message);
+    res.status(500).send("Internal Server Error");
   }
 };
+
 
 
 // Protected route to check session
