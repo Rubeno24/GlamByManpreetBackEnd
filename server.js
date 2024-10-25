@@ -102,7 +102,7 @@ async function createSession(sessionId, userId) {
 const isAuthenticated = async (req, res, next) => {
   try {
     // 1. Retrieve the session ID from the cookie
-    const sessionId = req.cookies.sessionId;
+    const sessionId = req.cookies.sid;
     console.log("Session ID from cookie:", sessionId);  // Log session ID for debugging
 
     if (!sessionId) {
