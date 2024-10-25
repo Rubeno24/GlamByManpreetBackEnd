@@ -634,7 +634,8 @@ app.post("/login", async (req, res) => {
     res.cookie('sid', sessionId, {
       httpOnly: true,
       secure: false,  // Use true in production
-      sameSite: 'Lax',  // Adjust if necessary based on CORS
+      path: '/', // Allows the cookie to be sent with requests to all routes
+      sameSite: 'None',  // Adjust if necessary based on CORS
       maxAge: 24 * 60 * 60 * 1000,  // 1 day
     });
     // 8. Respond with success
