@@ -155,6 +155,12 @@ app.get("/check-session", isAuthenticated, (req, res) => {
   });
 });
 
+app.get('/log-cookies', (req, res) => {
+  console.log('Cookies:', req.cookies);
+  res.send('Check server console for cookies.');
+});
+
+
 async function getSession(sessionId) {
   const { data, error } = await supabase
     .from("sessions")
