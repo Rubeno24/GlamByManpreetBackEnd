@@ -632,13 +632,12 @@ app.post("/login", async (req, res) => {
     }
 
     // 7. Set the session ID in a cookie
-    res.cookie("sid", sessionId, {
-      httpOnly: true, // Prevent client-side JS from accessing the cookie
-      sameSite: "None", // Allow cross-site requests
-      secure: false, // Set to true if using HTTPS in production
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    res.cookie('sid', sessionId, {
+      httpOnly: true,
+      secure: false,  // Use true in production
+      sameSite: 'Lax',  // Adjust if necessary based on CORS
+      maxAge: 24 * 60 * 60 * 1000,  // 1 day
     });
-
     // 8. Respond with success
     res.status(200).json({ message: "Login successful" });
 
