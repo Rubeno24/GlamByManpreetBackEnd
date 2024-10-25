@@ -39,6 +39,11 @@ app.use(
     credentials: true, // Allow cookies
   })
 );
+// Add Access-Control-Allow-Credentials header to all responses
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', 'true'); // Important for cookies
+  next();
+});
 
 
 app.use(
