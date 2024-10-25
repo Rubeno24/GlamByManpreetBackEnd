@@ -115,16 +115,22 @@ async function createSession(sessionId, userId) {
 }
 
 
- // Middleware to Authenticate Using Session from Supabase
- const isAuthenticated = async (req, res, next) => {
+const isAuthenticated = async (req, res, next) => {
   const sessionId = req.cookies.sessionId;
-  if (!sessionId) return res.status(401).send("Unauthorized");
+  console.log("Session ID from cookie:", sessionId);  // Log sessionId
+
+  if (!sessionId) {
+    console.warn("No session ID found");
+    return res.status(401).send("Unauthorized");
+  }
 
   try {
     const session = await getSession(sessionId);
+    console.log("Session data:", session);  // Log the entire session object
+
     if (!session) return res.status(401).send("Session expired or not found");
 
-    req.userId = session.sess.userId; // Ensure you're accessing the correct field
+    req.userId = session.sess.userId;  // Ensure correct field access
     next();
   } catch (err) {
     console.error("Auth error:", err.message);
