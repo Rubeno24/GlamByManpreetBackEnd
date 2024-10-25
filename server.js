@@ -33,6 +33,7 @@ const client = twilio(accountSid, authToken);
 // Middleware configuration
 app.use(express.json());
 app.use(cookieParser());
+
 app.use(
   cors({
     origin: 'http://localhost:3000', // Replace with frontend URL in production
@@ -155,10 +156,16 @@ app.get("/check-session", isAuthenticated, (req, res) => {
   });
 });
 
+// Route to log cookies
 app.get('/log-cookies', (req, res) => {
-  console.log('Cookies:', req.cookies);
-  res.send('Check server console for cookies.');
+  console.log('Cookies:', req.cookies); // Log all cookies to the console
+
+  // Optional: Log a specific cookie (e.g., 'sid')
+  console.log('Session ID:', req.cookies.sid);
+
+  res.send('Check server logs for cookies.');
 });
+
 
 
 async function getSession(sessionId) {
