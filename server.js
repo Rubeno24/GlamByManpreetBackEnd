@@ -565,10 +565,10 @@ app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // 1. Retrieve user from Supabase
+    // 1. Retrieve the user from Supabase by email
     const { data: user, error } = await supabase
       .from("accounts_dev")
-      .select("*")
+      .select("id, email, password")
       .eq("email", email)
       .single();
 
@@ -585,25 +585,31 @@ app.post("/login", async (req, res) => {
     // 3. Create a unique session ID
     const sessionId = crypto.randomBytes(16).toString("hex");
 
-    // 4. Store session ID and user ID in your session store (e.g., Supabase)
+    // 4. Create the JSON session object
+    const sessionData = {
+      userId: user.id,
+      createdAt: new Date().toISOString(),
+    };
+
+    // 5. Store the session in the `sessions` table
     const { error: sessionError } = await supabase
       .from("sessions")
-      .insert([{ session_id: sessionId, user_id: user.id }]);
+      .insert([{ sid: sessionId, sess: sessionData }]);
 
     if (sessionError) {
       console.error(sessionError);
       return res.status(500).send("Error creating session");
     }
 
-    // 5. Set the session ID in a cookie
-    res.cookie('sessionId', sessionId, {
-      httpOnly: true, // Prevent client-side JS from accessing the cookie
-      sameSite: 'None', // Cross-site cookie for frontend-backend communication
-      secure: false, // Set to true in production if using HTTPS
+    // 6. Set the session ID in a cookie
+    res.cookie('sid', sessionId, {
+      httpOnly: true,  // Prevent client-side JS from accessing the cookie
+      sameSite: 'None', // Allow cross-site requests
+      secure: false,    // Set to true if using HTTPS in production
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
-    // 6. Respond with success
+    // 7. Respond with success
     res.status(200).json({ message: "Login successful" });
 
   } catch (err) {
@@ -611,6 +617,7 @@ app.post("/login", async (req, res) => {
     res.status(500).send("Error during login");
   }
 });
+
 
 
 // *****************************
