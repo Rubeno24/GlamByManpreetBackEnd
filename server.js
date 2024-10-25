@@ -565,24 +565,47 @@ app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    // 1. Retrieve user from Supabase
     const { data: user, error } = await supabase
       .from("accounts_dev")
       .select("*")
       .eq("email", email)
       .single();
 
-    if (error || !user) return res.status(401).send("Invalid email or password");
+    if (error || !user) {
+      return res.status(401).send("Invalid email or password");
+    }
 
+    // 2. Compare the provided password with the hashed password in the database
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).send("Invalid email or password");
+    if (!isMatch) {
+      return res.status(401).send("Invalid email or password");
+    }
 
+    // 3. Create a unique session ID
     const sessionId = crypto.randomBytes(16).toString("hex");
-    await createSession(sessionId, user.id); // Store session in Supabase
 
- 
-    
+    // 4. Store session ID and user ID in your session store (e.g., Supabase)
+    const { error: sessionError } = await supabase
+      .from("sessions")
+      .insert([{ session_id: sessionId, user_id: user.id }]);
 
+    if (sessionError) {
+      console.error(sessionError);
+      return res.status(500).send("Error creating session");
+    }
+
+    // 5. Set the session ID in a cookie
+    res.cookie('sessionId', sessionId, {
+      httpOnly: true, // Prevent client-side JS from accessing the cookie
+      sameSite: 'None', // Cross-site cookie for frontend-backend communication
+      secure: false, // Set to true in production if using HTTPS
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    // 6. Respond with success
     res.status(200).json({ message: "Login successful" });
+
   } catch (err) {
     console.error(err);
     res.status(500).send("Error during login");
