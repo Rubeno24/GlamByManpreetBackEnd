@@ -136,6 +136,10 @@ const isAuthenticated = async (req, res, next) => {
   }
 };
 
+app.get('/userview', isAuthenticated, (req, res) => {
+  // This route is protected by the isAuthenticated middleware
+  res.send(`Welcome, user with ID: ${req.userId}`);
+});
 
 
 // Protected route to check session
