@@ -648,6 +648,39 @@ app.post("/login", async (req, res) => {
 
 
 
+// Route to check if the session exists based on sid cookie and user ID
+app.get('/check-session-status', async (req, res) => {
+  try {
+    const sessionId = req.cookies.sid;
+
+    if (!sessionId) {
+      console.warn("No session ID cookie found");
+      return res.status(200).json({ active: false });
+    }
+
+    console.log("Session ID from cookie:", sessionId);
+
+    // Query Supabase to check if the session ID exists
+    const { data: session, error } = await supabase
+      .from("sessions")
+      .select("uid") // Assuming uid is the column that corresponds to user ID
+      .eq("sid", sessionId)
+      .single();
+
+    if (error || !session) {
+      console.error("Session not found:", error || "No session found");
+      return res.status(200).json({ active: false });
+    }
+
+    // If session is found, return true
+    return res.status(200).json({ active: true });
+  } catch (err) {
+    console.error("Error checking session status:", err.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
 
 // *****************************
 // Route - Get feed submissions
