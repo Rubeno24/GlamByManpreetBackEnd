@@ -595,13 +595,13 @@ app.post("/login", async (req, res) => {
     const sessionId = crypto.randomBytes(16).toString("hex");
     await createSession(sessionId, user.id); // Store session in Supabase
 
-    // Set the sessionId as an HTTP-only cookie
     res.cookie("sessionId", sessionId, { 
       httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'lax', 
-      maxAge: 30 * 60 * 1000 
+      secure: false,  // Allow HTTP for local/testing
+      sameSite: 'Lax',  // Use 'Lax' for cross-origin safety
+      maxAge: 30 * 60 * 1000 // 30 minutes
     });
+    
 
     res.status(200).json({ message: "Login successful" });
   } catch (err) {
