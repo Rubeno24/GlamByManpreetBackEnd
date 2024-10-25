@@ -100,29 +100,42 @@ async function createSession(sessionId, userId) {
 
 
 const isAuthenticated = async (req, res, next) => {
-  const sessionId = req.cookies.sessionId;
-  console.log("Session ID from cookie:", sessionId);  // Log sessionId
-
-  if (!sessionId) {
-    console.warn("No session ID found");
-    return res.status(401).send("Unauthorized");
-  }
-
   try {
-    const session = await getSession(sessionId);
-    console.log("Session data:", session);  // Log the entire session object
+    // 1. Retrieve the session ID from the cookie
+    const sessionId = req.cookies.sessionId;
+    console.log("Session ID from cookie:", sessionId);  // Log session ID for debugging
 
-    if (!session) return res.status(401).send("Session expired or not found");
+    if (!sessionId) {
+      console.warn("No session ID found in cookie");
+      return res.status(401).send("Unauthorized: No session ID found");
+    }
 
-    req.userId = session.sess.userId;  // Ensure correct field access
+    // 2. Fetch session from the database
+    const { data: session, error } = await supabase
+      .from("sessions")
+      .select("sess")
+      .eq("sid", sessionId)
+      .single();
+
+    if (error || !session) {
+      console.error("Session not found or error:", error);
+      return res.status(401).send("Unauthorized: Session expired or not found");
+    }
+
+    console.log("Session data:", session);  // Log session data for verification
+
+    // 3. Attach the user ID to the request object for further use
+    req.userId = session.sess.userId;
+
+    // 4. Proceed to the next middleware or route handler
     next();
   } catch (err) {
     console.error("Auth error:", err.message);
-    res.status(500).send("Error checking session");
+    res.status(500).send("Internal Server Error: Error checking session");
   }
 };
 
-
+// Protected route to check session
 app.get("/check-session", isAuthenticated, (req, res) => {
   res.status(200).json({
     message: "Session is valid",
