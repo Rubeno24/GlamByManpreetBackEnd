@@ -437,27 +437,21 @@ app.delete("/bookings/:id", async (req, res) => {
 // ********************************
 // Route - Insert feed submissions
 // ********************************
-app.post("/feed", async (req, res) => {
-  const { content } = req.body;
+app.put('/feed/:id', async (req, res) => {
+  const { id } = req.params;
+  const { content, image_url } = req.body;
 
   try {
-    const { error: supabaseError } = await supabase
-      .from("feed_dev")
-      .insert([{ content }]);
+    const { data, error } = await supabase
+      .from('feed')
+      .update({ content, image_url })
+      .match({ id });
 
-    if (supabaseError) {
-      console.error(
-        "Error adding feed item to Supabase:",
-        supabaseError.message
-      );
-      return res.status(500).send("Error adding feed item to Supabase");
-    }
-    res
-      .status(201)
-      .send("Feed item added successfully to both local and Supabase");
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.status(200).json(data[0]);
   } catch (error) {
-    console.error("Error adding feed item:", error.message);
-    res.status(500).send("Error adding feed item");
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -466,23 +460,54 @@ app.post("/feed", async (req, res) => {
 // *****************************
 // Route - Get feed submissions
 // *****************************
-app.get("/feed", async (req, res) => {
+app.get('/feed', async (req, res) => {
   try {
-    // Fetch all feed items from the 'feed_dev' table in Supabase
     const { data, error } = await supabase
-      .from("feed_dev")
-      .select("*")
-      .order("created_at", { ascending: false }); // Assuming you have a 'created_at' column
+      .from('feed')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error("Error fetching feed data from Supabase:", error.message);
-      return res.status(500).send("Error fetching feed data from Supabase");
-    }
+    if (error) return res.status(500).json({ error: error.message });
 
-    res.json(data); // Send the fetched data as JSON response
+    res.status(200).json(data);
   } catch (error) {
-    console.error("Unexpected error fetching feed data:", error.message);
-    res.status(500).send("Unexpected error fetching feed data");
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// ********************************
+// Route - Delete feed submissions
+// ********************************
+app.delete('/feed/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { error } = await supabase.from('feed').delete().match({ id });
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.status(204).send(); // No content response
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// ********************************
+// Route - Create feed submissions
+// ********************************
+app.post('/feed/create', async (req, res) => {
+  const { content, image_url } = req.body;
+
+  try {
+    const { data, error } = await supabase.from('feed').insert([{ content, image_url }]).select();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.status(201).json(data[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
