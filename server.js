@@ -441,19 +441,28 @@ app.put('/feed/:id', async (req, res) => {
   const { id } = req.params;
   const { content, image_url } = req.body;
 
+  console.log('ID to update:', id);  // Log ID
+  console.log('Request Body:', req.body);  // Log Body
+
   try {
     const { data, error } = await supabase
       .from('feed')
       .update({ content, image_url })
-      .match({ id });
+      .eq('id', id);  // Ensure you use .eq() instead of .match()
 
     if (error) return res.status(500).json({ error: error.message });
 
+    if (data.length === 0) {
+      return res.status(404).json({ error: 'Feed item not found' });
+    }
+
     res.status(200).json(data[0]);
   } catch (error) {
+    console.error('Error updating feed:', error);  // Log the error for debugging
     res.status(500).json({ error: error.message });
   }
 });
+
 
 
 
