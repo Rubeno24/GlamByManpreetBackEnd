@@ -520,6 +520,52 @@ app.post('/feed/create', async (req, res) => {
   }
 });
 
+
+
+// ********************************
+// Route - Login
+// ********************************
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+      // Step 1: Authenticate the user
+      const { data: user, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+      });
+
+      if (authError) {
+          console.error("Authentication error:", authError.message);
+          return res.status(401).json({ error: 'Invalid email or password' });
+      }
+
+      // Step 2: Check if the user is an admin
+      const { data: adminData, error: adminError } = await supabase
+          .from('admin')
+          .select('email')
+          .eq('email', email);
+
+      if (adminError) {
+          console.error("Admin check error:", adminError.message);
+          return res.status(500).json({ error: 'Unable to verify admin status' });
+      }
+
+      // Determine role based on admin check
+      const role = adminData && adminData.length > 0 ? 'admin' : 'user';
+      
+      return res.json({
+          message: `${role === 'admin' ? 'Admin' : 'User'} login successful`,
+          role,
+          user,
+      });
+  } catch (error) {
+      console.error("Login error:", error.message);
+      return res.status(500).json({ error: 'An unexpected error occurred. Please try again later.' });
+  }
+});
+
+
 // Start the server
 const port = process.env.PORT || 8080;
 app.listen(port, () => {
