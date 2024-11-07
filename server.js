@@ -525,7 +525,7 @@ app.post('/feed/create', async (req, res) => {
 // ********************************
 // Route - Login
 // ********************************
-router.post('/login', async (req, res) => {
+app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
