@@ -33,10 +33,21 @@ const client = twilio(accountSid, authToken);
 // Middleware configuration
 app.use(express.json());
 app.use(cookieParser());
+const allowedOrigins = [
+  'https://ctrl-a-lt-elite-glg4.vercel.app', // main production domain
+  'https://ctrl-a-lt-elite-glg4-hqrxvok6o-nalisonias-projects.vercel.app', // specific preview domain
+];
 
 app.use(
   cors({
-    origin: 'https://ctrl-a-lt-elite-glg4-hqrxvok6o-nalisonias-projects.vercel.app', // Production frontend URL
+    origin: (origin, callback) => {
+      // Check if the request origin is in the list of allowed origins
+      if (allowedOrigins.includes(origin) || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true, // Allow cookies
   })
 );
