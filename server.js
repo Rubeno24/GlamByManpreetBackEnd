@@ -300,7 +300,7 @@ app.delete("/clients/:id", async (req, res) => {
 // **************************************************
 // Route - Read booking info from the Bookings Table
 // **************************************************
-app.get("/bookingsss", async (req, res) => {
+app.get("/bookings", async (req, res) => {
   try {
     // Step 1: Get all clients from 'clients_dev'
     const { data: clients, error: clientError } = await supabase
