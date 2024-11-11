@@ -33,9 +33,11 @@ const client = twilio(accountSid, authToken);
 // Middleware configuration
 app.use(express.json());
 app.use(cookieParser());
+
 const allowedOrigins = [
   'https://ctrl-a-lt-elite-glg4.vercel.app', // main production domain
   'https://ctrl-a-lt-elite-glg4-hqrxvok6o-nalisonias-projects.vercel.app', // specific preview domain
+  ,'http://localhost:3000'
 ];
 
 app.use(
