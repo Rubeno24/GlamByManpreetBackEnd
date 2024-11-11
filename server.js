@@ -36,7 +36,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: 'http://localhost:3000', // Replace with frontend URL in production
+    origin: 'https://ctrl-a-lt-elite-glg4-hqrxvok6o-nalisonias-projects.vercel.app', // Production frontend URL
     credentials: true, // Allow cookies
   })
 );
