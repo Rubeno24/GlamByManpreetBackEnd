@@ -37,7 +37,8 @@ app.use(cookieParser());
 const allowedOrigins = [
   'https://ctrl-a-lt-elite-glg4.vercel.app', // main production domain
   'https://ctrl-a-lt-elite-glg4-hqrxvok6o-nalisonias-projects.vercel.app', // specific preview domain
-  ,'http://localhost:3000'
+  ,'http://localhost:3000',
+  'https://ctrl-a-lt-elite-glg4-nalisonias-projects.vercel.app'
 ];
 
 app.use(
